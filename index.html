@@ -45,7 +45,7 @@ header {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 15px;
 }
 
@@ -69,8 +69,10 @@ header {
   pointer-events: none;
 }
 
-video {
+.card video {
   width: 100%;
+  height: 220px;
+  object-fit: cover;
   border-radius: 8px;
 }
 
@@ -114,6 +116,12 @@ button:disabled {
   margin: 5px;
   padding: 10px;
   border-radius: 8px;
+}
+
+#thanksSlide {
+  text-align: center;
+  font-size: 2em;
+  color: #b0b0b0;
 }
 </style>
 </head>
@@ -194,6 +202,15 @@ function renderCategory() {
   const slider = document.getElementById("slider");
   slider.innerHTML = "";
 
+  if (currentIndex >= categories.length) {
+    // KONIEC: pokazujemy slide "Dziękujemy"
+    const div = document.createElement("div");
+    div.id = "thanksSlide";
+    div.innerText = "🎉 Dziękujemy za głosy! 🎉";
+    slider.appendChild(div);
+    return;
+  }
+
   const cat = categories[currentIndex];
   const div = document.createElement("div");
   div.className = "category";
@@ -217,7 +234,7 @@ function renderCategory() {
 }
 
 function nextCategory() {
-  if (currentIndex < categories.length - 1) {
+  if (currentIndex < categories.length) {
     currentIndex++;
     renderCategory();
   }
@@ -274,6 +291,9 @@ function vote(category, card) {
 
   lockIfVoted();
   alert("Głos zapisany! 🏆");
+
+  // automatycznie przejdź do następnej kategorii
+  nextCategory();
 }
 
 function lockIfVoted() {
