@@ -93,14 +93,6 @@
       background: #111;
     }
 
-    input {
-      padding: 8px;
-      margin: 5px 0;
-      width: 100%;
-      border-radius: 5px;
-      border: none;
-    }
-
     .result {
       margin-top: 10px;
       background: #222;
@@ -144,6 +136,20 @@ const categories = [
   "Porada Roku (klip)"
 ];
 
+// ---------------- IP ----------------
+let userIP = null;
+
+async function fetchIP() {
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    userIP = data.ip;
+  } catch (e) {
+    alert("Nie można pobrać IP. Sprawdź internet.");
+  }
+}
+
+// ---------------- VOTES ----------------
 function getVotes() {
   return JSON.parse(localStorage.getItem("votes") || "{}");
 }
@@ -152,30 +158,41 @@ function saveVotes(votes) {
   localStorage.setItem("votes", JSON.stringify(votes));
 }
 
-// Przechowuje, które kategorie zostały już zagłosowane
-let votedCategories = JSON.parse(localStorage.getItem("votedCategories") || "{}");
+// IP -> { category: true }
+function getIPLocks() {
+  return JSON.parse(localStorage.getItem("ipLocks") || "{}");
+}
 
-// Wybrana opcja przed oddaniem głosu
+function saveIPLocks(data) {
+  localStorage.setItem("ipLocks", JSON.stringify(data));
+}
+
 let selectedOption = {};
 
-// Funkcja wyboru karty w kategorii
 function selectCard(category, option, cardElement) {
-  if (votedCategories[category]) return; // jeśli już zagłosowano, nie zmieniaj
+  if (!userIP) return;
 
-  // usuń podświetlenie z innych kart w tej kategorii
+  const locks = getIPLocks();
+  if (locks[userIP] && locks[userIP][category]) return;
+
   const cards = cardElement.parentElement.querySelectorAll(".card");
   cards.forEach(c => c.classList.remove("selected"));
 
-  // zaznacz aktualną kartę
   cardElement.classList.add("selected");
-
-  // zapisz tymczasowy wybór
   selectedOption[category] = option;
 }
 
-// Funkcja oddania głosu
 function vote(category, cardElement) {
-  if (votedCategories[category]) return; // już zagłosowano
+  if (!userIP) {
+    alert("Ładowanie IP... spróbuj za chwilę");
+    return;
+  }
+
+  const locks = getIPLocks();
+  if (locks[userIP] && locks[userIP][category]) {
+    alert("Z tego IP już oddano głos w tej kategorii!");
+    return;
+  }
 
   const option = selectedOption[category];
   if (!option) {
@@ -190,11 +207,11 @@ function vote(category, cardElement) {
   votes[category][option]++;
   saveVotes(votes);
 
-  // zaznacz kategorię jako zagłosowaną
-  votedCategories[category] = true;
-  localStorage.setItem("votedCategories", JSON.stringify(votedCategories));
+  // Zablokuj IP dla tej kategorii
+  if (!locks[userIP]) locks[userIP] = {};
+  locks[userIP][category] = true;
+  saveIPLocks(locks);
 
-  // zablokuj wszystkie karty w kategorii
   const cards = cardElement.parentElement.querySelectorAll(".card");
   cards.forEach(c => c.classList.add("voted"));
 
@@ -208,32 +225,42 @@ function render() {
     const div = document.createElement("div");
     div.className = "category";
 
-    div.innerHTML = `<h2>${index + 1}. ${cat}</h2>
+    div.innerHTML = `
+      <h2>${index + 1}. ${cat}</h2>
       <div class="grid">
         ${[1,2,3,4].map(i => `
           <div class="card" onclick="selectCard('${cat}', 'Opcja ${i}', this)">
             <video src="klip${index + 1}_${i}.mp4" controls></video>
-            <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">Głosuj</button>
+            <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">
+              Głosuj
+            </button>
           </div>
-        `).join('')}
+        `).join("")}
       </div>
     `;
 
     container.appendChild(div);
   });
 
-  // odblokuj/oznacz już zagłosowane kategorie
-  for (let cat in votedCategories) {
-    if (votedCategories[cat]) {
-      const categoryDiv = [...container.children].find(c => c.querySelector("h2").innerText.includes(cat));
-      if (categoryDiv) {
-        const cards = categoryDiv.querySelectorAll(".card");
-        cards.forEach(c => c.classList.add("voted"));
-      }
-    }
-  }
+  lockAlreadyVoted();
 }
 
+function lockAlreadyVoted() {
+  if (!userIP) return;
+
+  const locks = getIPLocks();
+  if (!locks[userIP]) return;
+
+  document.querySelectorAll(".category").forEach(catDiv => {
+    const title = catDiv.querySelector("h2").innerText.replace(/^\d+\. /, "");
+    if (locks[userIP][title]) {
+      const cards = catDiv.querySelectorAll(".card");
+      cards.forEach(c => c.classList.add("voted"));
+    }
+  });
+}
+
+// ---------------- ADMIN ----------------
 function showLogin() {
   const login = prompt("Login:");
   const pass = prompt("Hasło:");
@@ -266,17 +293,16 @@ function showResults() {
 }
 
 function resetVotes() {
-  if (confirm("Na pewno chcesz usunąć wszystkie głosy?")) {
+  if (confirm("Na pewno chcesz usunąć wszystkie głosy i odblokować IP?")) {
     localStorage.removeItem("votes");
-    localStorage.removeItem("votedCategories");
-    votedCategories = {};
-    selectedOption = {};
-    alert("Głosy zresetowane");
+    localStorage.removeItem("ipLocks");
+    alert("Wszystkie głosy i IP odblokowane!");
     location.reload();
   }
 }
 
-render();
+// ---------------- INIT ----------------
+fetchIP().then(render);
 </script>
 
 </body>
