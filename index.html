@@ -22,11 +22,25 @@ header {
   text-align: center;
   height: 150px;
   background: #111;
+  z-index: 3;
 }
 
 header img {
   max-height: 120px;
   margin-top: 15px;
+}
+
+#bgLogo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('Srebrne_Antosie_2025.png') no-repeat center center;
+  background-size: cover;
+  filter: blur(15px) brightness(0.3);
+  z-index: 0;
+  pointer-events: none; /* nie przeszkadza w klikaniu */
 }
 
 #slider {
@@ -35,6 +49,7 @@ header img {
   justify-content: center;
   align-items: center;
   position: relative;
+  z-index: 2;
 }
 
 .category {
@@ -42,7 +57,6 @@ header img {
   max-width: 1000px;
   padding: 20px;
   position: relative;
-  z-index: 2;
 }
 
 .category h2 {
@@ -108,12 +122,14 @@ button:disabled {
 #nav {
   text-align: center;
   margin: 10px 0;
+  z-index: 2;
 }
 
 #adminBar {
   background: #111;
   padding: 15px;
   text-align: center;
+  z-index: 2;
 }
 
 #adminPanel {
@@ -133,25 +149,13 @@ button:disabled {
   font-size: 2em;
   color: #b0b0b0;
 }
-
-#bgLogo {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('/mnt/data/A_screenshot_of_a_webpage_for_the_"Srebrne_Antosie.png') no-repeat center center;
-  background-size: cover;
-  filter: blur(15px) brightness(0.3);
-  z-index: 1;
-}
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="/mnt/data/A_screenshot_of_a_webpage_for_the_'Srebrne_Antosie.png" alt="Srebrne Antosie 2025 Logo">
+  <img src="Srebrne_Antosie_2025.png" alt="Srebrne Antosie 2025 Logo">
 </header>
 
 <div id="bgLogo"></div>
@@ -378,3 +382,4 @@ fetchIP().then(renderCategory);
 
 </body>
 </html>
+
