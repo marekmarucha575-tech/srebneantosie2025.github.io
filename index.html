@@ -14,15 +14,19 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
 header {
-  background: linear-gradient(135deg, #b0b0b0, #888);
-  color: black;
-  padding: 15px;
+  position: relative;
   text-align: center;
-  font-size: 2em;
-  font-weight: bold;
+  height: 150px;
+  background: #111;
+}
+
+header img {
+  max-height: 120px;
+  margin-top: 15px;
 }
 
 #slider {
@@ -30,12 +34,15 @@ header {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .category {
   width: 100%;
   max-width: 1000px;
   padding: 20px;
+  position: relative;
+  z-index: 2;
 }
 
 .category h2 {
@@ -53,7 +60,7 @@ header {
 .card {
   width: 100%;
   max-width: 250px;
-  background: #1a1a1a;
+  background: rgba(26,26,26,0.8);
   padding: 10px;
   border-radius: 10px;
   text-align: center;
@@ -126,12 +133,28 @@ button:disabled {
   font-size: 2em;
   color: #b0b0b0;
 }
+
+#bgLogo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/mnt/data/A_screenshot_of_a_webpage_for_the_"Srebrne_Antosie.png') no-repeat center center;
+  background-size: cover;
+  filter: blur(15px) brightness(0.3);
+  z-index: 1;
+}
 </style>
 </head>
 
 <body>
 
-<header>🏆 Srebrne Antosie 2025 🏆</header>
+<header>
+  <img src="/mnt/data/A_screenshot_of_a_webpage_for_the_'Srebrne_Antosie.png" alt="Srebrne Antosie 2025 Logo">
+</header>
+
+<div id="bgLogo"></div>
 
 <div id="slider"></div>
 
@@ -206,7 +229,6 @@ function renderCategory() {
   slider.innerHTML = "";
 
   if (currentIndex >= categories.length) {
-    // KONIEC: pokazujemy slide "Dziękujemy"
     const div = document.createElement("div");
     div.id = "thanksSlide";
     div.innerText = "🎉 Dziękujemy za głosy! 🎉";
@@ -295,7 +317,6 @@ function vote(category, card) {
   lockIfVoted();
   alert("Głos zapisany! 🏆");
 
-  // automatycznie przejdź do następnej kategorii
   nextCategory();
 }
 
