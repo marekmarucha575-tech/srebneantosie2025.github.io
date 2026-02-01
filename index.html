@@ -1,122 +1,143 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Srebrne Antosie 2025</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: #fff;
-    }
+<meta charset="UTF-8">
+<title>Srebrne Antosie 2025</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    header {
-      background: linear-gradient(135deg, #b0b0b0, #888);
-      color: black;
-      padding: 20px;
-      text-align: center;
-      font-size: 2em;
-      font-weight: bold;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
-    .category {
-      padding: 20px;
-      border-bottom: 1px solid #333;
-    }
+header {
+  background: linear-gradient(135deg, #b0b0b0, #888);
+  color: black;
+  padding: 15px;
+  text-align: center;
+  font-size: 2em;
+  font-weight: bold;
+}
 
-    .category h2 {
-      margin-bottom: 10px;
-      color: #b0b0b0;
-    }
+#slider {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
+.category {
+  width: 100%;
+  max-width: 1000px;
+  padding: 20px;
+}
 
-    .card {
-      background: #1a1a1a;
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.2s;
-      border: 2px solid transparent;
-    }
+.category h2 {
+  color: #b0b0b0;
+  text-align: center;
+}
 
-    .card.selected {
-      border: 2px solid white;
-      background: #333;
-    }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
 
-    .card.voted {
-      opacity: 0.5;
-      pointer-events: none;
-    }
+.card {
+  background: #1a1a1a;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: 0.2s;
+}
 
-    video {
-      width: 100%;
-      border-radius: 8px;
-    }
+.card.selected {
+  border: 2px solid white;
+  background: #333;
+}
 
-    button {
-      margin-top: 10px;
-      padding: 8px 15px;
-      border: none;
-      border-radius: 5px;
-      background: #b0b0b0;
-      cursor: pointer;
-      font-weight: bold;
-    }
+.card.voted {
+  opacity: 0.4;
+  pointer-events: none;
+}
 
-    button:hover:not(:disabled) {
-      background: #888;
-    }
+video {
+  width: 100%;
+  border-radius: 8px;
+}
 
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
+button {
+  margin-top: 10px;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  background: #b0b0b0;
+  cursor: pointer;
+  font-weight: bold;
+}
 
-    .footer {
-      text-align: center;
-      padding: 20px;
-      color: #888;
-    }
+button:hover:not(:disabled) {
+  background: #888;
+}
 
-    #adminPanel {
-      display: none;
-      padding: 20px;
-      background: #111;
-    }
+button:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
 
-    .result {
-      margin-top: 10px;
-      background: #222;
-      padding: 10px;
-      border-radius: 8px;
-    }
-  </style>
+#nav {
+  text-align: center;
+  margin: 10px 0;
+}
+
+#adminBar {
+  background: #111;
+  padding: 15px;
+  text-align: center;
+}
+
+#adminPanel {
+  display: none;
+  margin-top: 10px;
+}
+
+.result {
+  background: #222;
+  margin: 5px;
+  padding: 10px;
+  border-radius: 8px;
+}
+</style>
 </head>
+
 <body>
 
-<header>
-  🏆 Srebrne Antosie 2025 🏆
-</header>
+<header>🏆 Srebrne Antosie 2025 🏆</header>
 
-<div id="categories"></div>
+<div id="slider"></div>
 
-<div class="footer">
-  Tajny panel: <a href="#" onclick="showLogin()" style="color:#b0b0b0">Admin</a>
+<div id="nav">
+  <button onclick="prevCategory()">⬅ Poprzednia</button>
+  <button onclick="nextCategory()">Następna kategoria ➡</button>
 </div>
 
-<div id="adminPanel">
-  <h2>Panel Admina</h2>
-  <div id="results"></div>
-  <button onclick="resetVotes()">RESETUJ WSZYSTKIE GŁOSY</button>
+<div id="adminBar">
+  Tajny panel:
+  <a href="#" onclick="showLogin()" style="color:#b0b0b0">Admin</a>
+
+  <div id="adminPanel">
+    <h3>Panel Admina</h3>
+    <div id="results"></div>
+    <button onclick="resetVotes()">RESETUJ WSZYSTKIE GŁOSY</button>
+  </div>
 </div>
 
 <script>
@@ -136,20 +157,22 @@ const categories = [
   "Porada Roku (klip)"
 ];
 
-// ---------------- IP ----------------
+let currentIndex = 0;
+let selectedOption = {};
 let userIP = null;
 
+// ---------------- IP ----------------
 async function fetchIP() {
   try {
     const res = await fetch("https://api.ipify.org?format=json");
     const data = await res.json();
     userIP = data.ip;
-  } catch (e) {
-    alert("Nie można pobrać IP. Sprawdź internet.");
+  } catch {
+    alert("Nie udało się pobrać IP");
   }
 }
 
-// ---------------- VOTES ----------------
+// ---------------- STORAGE ----------------
 function getVotes() {
   return JSON.parse(localStorage.getItem("votes") || "{}");
 }
@@ -158,7 +181,6 @@ function saveVotes(votes) {
   localStorage.setItem("votes", JSON.stringify(votes));
 }
 
-// IP -> { category: true }
 function getIPLocks() {
   return JSON.parse(localStorage.getItem("ipLocks") || "{}");
 }
@@ -167,30 +189,70 @@ function saveIPLocks(data) {
   localStorage.setItem("ipLocks", JSON.stringify(data));
 }
 
-let selectedOption = {};
+// ---------------- UI ----------------
+function renderCategory() {
+  const slider = document.getElementById("slider");
+  slider.innerHTML = "";
 
-function selectCard(category, option, cardElement) {
+  const cat = categories[currentIndex];
+  const div = document.createElement("div");
+  div.className = "category";
+
+  div.innerHTML = `
+    <h2>${currentIndex + 1}/10 — ${cat}</h2>
+    <div class="grid">
+      ${[1,2,3,4].map(i => `
+        <div class="card" onclick="selectCard('${cat}', 'Opcja ${i}', this)">
+          <video src="klip${currentIndex + 1}_${i}.mp4" controls></video>
+          <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">
+            Głosuj
+          </button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  slider.appendChild(div);
+  lockIfVoted();
+}
+
+function nextCategory() {
+  if (currentIndex < categories.length - 1) {
+    currentIndex++;
+    renderCategory();
+  }
+}
+
+function prevCategory() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderCategory();
+  }
+}
+
+// ---------------- VOTING ----------------
+function selectCard(category, option, card) {
   if (!userIP) return;
 
   const locks = getIPLocks();
   if (locks[userIP] && locks[userIP][category]) return;
 
-  const cards = cardElement.parentElement.querySelectorAll(".card");
+  const cards = card.parentElement.querySelectorAll(".card");
   cards.forEach(c => c.classList.remove("selected"));
 
-  cardElement.classList.add("selected");
+  card.classList.add("selected");
   selectedOption[category] = option;
 }
 
-function vote(category, cardElement) {
+function vote(category, card) {
   if (!userIP) {
-    alert("Ładowanie IP... spróbuj za chwilę");
+    alert("Ładowanie IP...");
     return;
   }
 
   const locks = getIPLocks();
   if (locks[userIP] && locks[userIP][category]) {
-    alert("Z tego IP już oddano głos w tej kategorii!");
+    alert("Już zagłosowałeś w tej kategorii!");
     return;
   }
 
@@ -203,61 +265,26 @@ function vote(category, cardElement) {
   const votes = getVotes();
   if (!votes[category]) votes[category] = {};
   if (!votes[category][option]) votes[category][option] = 0;
-
   votes[category][option]++;
   saveVotes(votes);
 
-  // Zablokuj IP dla tej kategorii
   if (!locks[userIP]) locks[userIP] = {};
   locks[userIP][category] = true;
   saveIPLocks(locks);
 
-  const cards = cardElement.parentElement.querySelectorAll(".card");
-  cards.forEach(c => c.classList.add("voted"));
-
+  lockIfVoted();
   alert("Głos zapisany! 🏆");
 }
 
-function render() {
-  const container = document.getElementById("categories");
-
-  categories.forEach((cat, index) => {
-    const div = document.createElement("div");
-    div.className = "category";
-
-    div.innerHTML = `
-      <h2>${index + 1}. ${cat}</h2>
-      <div class="grid">
-        ${[1,2,3,4].map(i => `
-          <div class="card" onclick="selectCard('${cat}', 'Opcja ${i}', this)">
-            <video src="klip${index + 1}_${i}.mp4" controls></video>
-            <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">
-              Głosuj
-            </button>
-          </div>
-        `).join("")}
-      </div>
-    `;
-
-    container.appendChild(div);
-  });
-
-  lockAlreadyVoted();
-}
-
-function lockAlreadyVoted() {
-  if (!userIP) return;
-
+function lockIfVoted() {
+  const cat = categories[currentIndex];
   const locks = getIPLocks();
-  if (!locks[userIP]) return;
 
-  document.querySelectorAll(".category").forEach(catDiv => {
-    const title = catDiv.querySelector("h2").innerText.replace(/^\d+\. /, "");
-    if (locks[userIP][title]) {
-      const cards = catDiv.querySelectorAll(".card");
-      cards.forEach(c => c.classList.add("voted"));
-    }
-  });
+  if (locks[userIP] && locks[userIP][cat]) {
+    document.querySelectorAll(".card").forEach(c => {
+      c.classList.add("voted");
+    });
+  }
 }
 
 // ---------------- ADMIN ----------------
@@ -282,7 +309,7 @@ function showResults() {
     const div = document.createElement("div");
     div.className = "result";
 
-    let html = `<h3>${cat}</h3>`;
+    let html = `<strong>${cat}</strong><br>`;
     for (let opt in votes[cat]) {
       html += `${opt}: ${votes[cat][opt]} głosów<br>`;
     }
@@ -293,16 +320,16 @@ function showResults() {
 }
 
 function resetVotes() {
-  if (confirm("Na pewno chcesz usunąć wszystkie głosy i odblokować IP?")) {
+  if (confirm("Na pewno zresetować wszystkie głosy i IP?")) {
     localStorage.removeItem("votes");
     localStorage.removeItem("ipLocks");
-    alert("Wszystkie głosy i IP odblokowane!");
+    alert("Zresetowano wszystko!");
     location.reload();
   }
 }
 
 // ---------------- INIT ----------------
-fetchIP().then(render);
+fetchIP().then(renderCategory);
 </script>
 
 </body>
