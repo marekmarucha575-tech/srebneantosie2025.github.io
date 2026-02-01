@@ -44,11 +44,17 @@
       text-align: center;
       cursor: pointer;
       transition: 0.2s;
+      border: 2px solid transparent;
     }
 
-    .card:hover {
-      transform: scale(1.05);
-      background: #222;
+    .card.selected {
+      border: 2px solid white;
+      background: #333;
+    }
+
+    .card.voted {
+      opacity: 0.5;
+      pointer-events: none;
     }
 
     video {
@@ -66,8 +72,13 @@
       font-weight: bold;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
       background: #888;
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
     }
 
     .footer {
@@ -141,14 +152,51 @@ function saveVotes(votes) {
   localStorage.setItem("votes", JSON.stringify(votes));
 }
 
-function vote(category, option) {
-  const votes = getVotes();
+// Przechowuje, które kategorie zostały już zagłosowane
+let votedCategories = JSON.parse(localStorage.getItem("votedCategories") || "{}");
 
+// Wybrana opcja przed oddaniem głosu
+let selectedOption = {};
+
+// Funkcja wyboru karty w kategorii
+function selectCard(category, option, cardElement) {
+  if (votedCategories[category]) return; // jeśli już zagłosowano, nie zmieniaj
+
+  // usuń podświetlenie z innych kart w tej kategorii
+  const cards = cardElement.parentElement.querySelectorAll(".card");
+  cards.forEach(c => c.classList.remove("selected"));
+
+  // zaznacz aktualną kartę
+  cardElement.classList.add("selected");
+
+  // zapisz tymczasowy wybór
+  selectedOption[category] = option;
+}
+
+// Funkcja oddania głosu
+function vote(category, cardElement) {
+  if (votedCategories[category]) return; // już zagłosowano
+
+  const option = selectedOption[category];
+  if (!option) {
+    alert("Najpierw wybierz klip!");
+    return;
+  }
+
+  const votes = getVotes();
   if (!votes[category]) votes[category] = {};
   if (!votes[category][option]) votes[category][option] = 0;
 
   votes[category][option]++;
   saveVotes(votes);
+
+  // zaznacz kategorię jako zagłosowaną
+  votedCategories[category] = true;
+  localStorage.setItem("votedCategories", JSON.stringify(votedCategories));
+
+  // zablokuj wszystkie karty w kategorii
+  const cards = cardElement.parentElement.querySelectorAll(".card");
+  cards.forEach(c => c.classList.add("voted"));
 
   alert("Głos zapisany! 🏆");
 }
@@ -160,30 +208,30 @@ function render() {
     const div = document.createElement("div");
     div.className = "category";
 
-    div.innerHTML = `
-      <h2>${index + 1}. ${cat}</h2>
+    div.innerHTML = `<h2>${index + 1}. ${cat}</h2>
       <div class="grid">
-        <div class="card" onclick="vote('${cat}', 'Opcja 1')">
-          <video src="klip${index + 1}_1.mp4" controls></video>
-          <button>Głosuj</button>
-        </div>
-        <div class="card" onclick="vote('${cat}', 'Opcja 2')">
-          <video src="klip${index + 1}_2.mp4" controls></video>
-          <button>Głosuj</button>
-        </div>
-        <div class="card" onclick="vote('${cat}', 'Opcja 3')">
-          <video src="klip${index + 1}_3.mp4" controls></video>
-          <button>Głosuj</button>
-        </div>
-        <div class="card" onclick="vote('${cat}', 'Opcja 4')">
-          <video src="klip${index + 1}_4.mp4" controls></video>
-          <button>Głosuj</button>
-        </div>
+        ${[1,2,3,4].map(i => `
+          <div class="card" onclick="selectCard('${cat}', 'Opcja ${i}', this)">
+            <video src="klip${index + 1}_${i}.mp4" controls></video>
+            <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">Głosuj</button>
+          </div>
+        `).join('')}
       </div>
     `;
 
     container.appendChild(div);
   });
+
+  // odblokuj/oznacz już zagłosowane kategorie
+  for (let cat in votedCategories) {
+    if (votedCategories[cat]) {
+      const categoryDiv = [...container.children].find(c => c.querySelector("h2").innerText.includes(cat));
+      if (categoryDiv) {
+        const cards = categoryDiv.querySelectorAll(".card");
+        cards.forEach(c => c.classList.add("voted"));
+      }
+    }
+  }
 }
 
 function showLogin() {
@@ -220,8 +268,11 @@ function showResults() {
 function resetVotes() {
   if (confirm("Na pewno chcesz usunąć wszystkie głosy?")) {
     localStorage.removeItem("votes");
+    localStorage.removeItem("votedCategories");
+    votedCategories = {};
+    selectedOption = {};
     alert("Głosy zresetowane");
-    showResults();
+    location.reload();
   }
 }
 
