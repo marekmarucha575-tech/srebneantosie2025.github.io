@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
@@ -17,22 +17,12 @@ body {
 }
 
 header {
+  background: linear-gradient(135deg, #b0b0b0, #888);
+  color: black;
+  padding: 15px;
   text-align: center;
-  height: 150px;
-  background: #111;
-}
-
-header img {
-  max-height: 120px;
-  margin-top: 15px;
-}
-
-#bgLogo {
-  position: fixed;
-  inset: 0;
-  background: url('Srebrne_Antosie_2025.png') center/cover no-repeat;
-  filter: blur(15px) brightness(0.3);
-  z-index: 0;
+  font-size: 2em;
+  font-weight: bold;
 }
 
 #slider {
@@ -40,31 +30,41 @@ header img {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2;
 }
 
 .category {
+  width: 100%;
   max-width: 1000px;
   padding: 20px;
+}
+
+.category h2 {
+  color: #b0b0b0;
+  text-align: center;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 15px;
+  justify-items: center;
 }
 
 .card {
-  background: rgba(26,26,26,0.85);
+  width: 100%;
+  max-width: 250px;
+  background: #1a1a1a;
   padding: 10px;
   border-radius: 10px;
   text-align: center;
   cursor: pointer;
   border: 2px solid transparent;
+  transition: 0.2s;
 }
 
 .card.selected {
-  border-color: white;
+  border: 2px solid white;
+  background: #333;
 }
 
 .card.voted {
@@ -72,67 +72,89 @@ header img {
   pointer-events: none;
 }
 
-.thumb {
+.card video {
   width: 100%;
   height: 220px;
   object-fit: cover;
   border-radius: 8px;
-  background: black;
 }
 
 button {
-  margin-top: 8px;
-  padding: 8px 14px;
+  margin-top: 10px;
+  padding: 8px 15px;
   border: none;
   border-radius: 5px;
   background: #b0b0b0;
-  font-weight: bold;
   cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover:not(:disabled) {
+  background: #888;
+}
+
+button:disabled {
+  background: #555;
+  cursor: not-allowed;
 }
 
 #nav {
   text-align: center;
-  margin: 10px;
+  margin: 10px 0;
 }
 
-/* POPUP VIDEO */
-#videoModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.85);
+#adminBar {
+  background: #111;
+  padding: 15px;
+  text-align: center;
+}
+
+#adminPanel {
   display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+  margin-top: 10px;
 }
 
-#videoModal video {
-  max-width: 90%;
-  max-height: 90%;
+.result {
+  background: #222;
+  margin: 5px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+#thanksSlide {
+  text-align: center;
+  font-size: 2em;
+  color: #b0b0b0;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <img src="Srebrne_Antosie_2025.png">
-</header>
+<header>🏆 Srebrne Antosie 2025 🏆</header>
 
-<div id="bgLogo"></div>
 <div id="slider"></div>
 
 <div id="nav">
   <button onclick="prevCategory()">⬅ Poprzednia</button>
-  <button onclick="nextCategory()">Następna ➡</button>
+  <button onclick="nextCategory()">Następna kategoria ➡</button>
 </div>
 
-<!-- MODAL -->
-<div id="videoModal" onclick="closeVideo()">
-  <video controls autoplay></video>
+<div id="adminBar">
+  Tajny panel:
+  <a href="#" onclick="showLogin()" style="color:#b0b0b0">Admin</a>
+
+  <div id="adminPanel">
+    <h3>Panel Admina</h3>
+    <div id="results"></div>
+    <button onclick="resetVotes()">RESETUJ WSZYSTKIE GŁOSY</button>
+  </div>
 </div>
 
 <script>
+const ADMIN_LOGIN = "wronki";
+const ADMIN_PASSWORD = "ojciec";
+
 const categories = [
   "Rage Roku (klip)",
   "Smutek (klip)",
@@ -140,64 +162,82 @@ const categories = [
   "Zająkanie się (klip)",
   "Gracz Roku (osoba)",
   "Zagranie Roku (klip)",
-  "Dotknąć trawy (osoba)",
+  "Osoba która powinna dotknąć trawy (osoba)",
   "Najgorsze Zagranie (klip)",
   "Kierowca Roku (klip)",
   "Porada Roku (klip)"
 ];
 
-const clips = {
-  "Rage Roku (klip)": [
-    { thumb: "thumbs/klip1.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" },
-    { thumb: "thumbs/klip2.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" },
-    { thumb: "thumbs/klip3.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" },
-    { thumb: "thumbs/klip4.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" }
-  ]
-};
-
 let currentIndex = 0;
+let selectedOption = {};
+let userIP = null;
 
+// ---------------- IP ----------------
+async function fetchIP() {
+  try {
+    const res = await fetch("https://api.ipify.org?format=json");
+    const data = await res.json();
+    userIP = data.ip;
+  } catch {
+    alert("Nie udało się pobrać IP");
+  }
+}
+
+// ---------------- STORAGE ----------------
+function getVotes() {
+  return JSON.parse(localStorage.getItem("votes") || "{}");
+}
+
+function saveVotes(votes) {
+  localStorage.setItem("votes", JSON.stringify(votes));
+}
+
+function getIPLocks() {
+  return JSON.parse(localStorage.getItem("ipLocks") || "{}");
+}
+
+function saveIPLocks(data) {
+  localStorage.setItem("ipLocks", JSON.stringify(data));
+}
+
+// ---------------- UI ----------------
 function renderCategory() {
   const slider = document.getElementById("slider");
   slider.innerHTML = "";
+
+  if (currentIndex >= categories.length) {
+    // KONIEC: pokazujemy slide "Dziękujemy"
+    const div = document.createElement("div");
+    div.id = "thanksSlide";
+    div.innerText = "🎉 Dziękujemy za głosy! 🎉";
+    slider.appendChild(div);
+    return;
+  }
 
   const cat = categories[currentIndex];
   const div = document.createElement("div");
   div.className = "category";
 
-  const items = clips[cat] || [];
-
   div.innerHTML = `
     <h2>${currentIndex + 1}/10 — ${cat}</h2>
     <div class="grid">
-      ${items.map(item => `
-        <div class="card" onclick="openVideo('${item.video}')">
-          <img src="${item.thumb}" class="thumb">
+      ${[1,2,3,4].map(i => `
+        <div class="card" onclick="selectCard('${cat}', 'Opcja ${i}', this)">
+          <video src="klip${currentIndex + 1}_${i}.mp4" controls></video>
+          <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">
+            Głosuj
+          </button>
         </div>
       `).join("")}
     </div>
   `;
 
   slider.appendChild(div);
-}
-
-function openVideo(src) {
-  const modal = document.getElementById("videoModal");
-  const video = modal.querySelector("video");
-  video.src = src;
-  modal.style.display = "flex";
-}
-
-function closeVideo() {
-  const modal = document.getElementById("videoModal");
-  const video = modal.querySelector("video");
-  video.pause();
-  video.src = "";
-  modal.style.display = "none";
+  lockIfVoted();
 }
 
 function nextCategory() {
-  if (currentIndex < categories.length - 1) {
+  if (currentIndex < categories.length) {
     currentIndex++;
     renderCategory();
   }
@@ -210,7 +250,109 @@ function prevCategory() {
   }
 }
 
-renderCategory();
+// ---------------- VOTING ----------------
+function selectCard(category, option, card) {
+  if (!userIP) return;
+
+  const locks = getIPLocks();
+  if (locks[userIP] && locks[userIP][category]) return;
+
+  const cards = card.parentElement.querySelectorAll(".card");
+  cards.forEach(c => c.classList.remove("selected"));
+
+  card.classList.add("selected");
+  selectedOption[category] = option;
+}
+
+function vote(category, card) {
+  if (!userIP) {
+    alert("Ładowanie IP...");
+    return;
+  }
+
+  const locks = getIPLocks();
+  if (locks[userIP] && locks[userIP][category]) {
+    alert("Już zagłosowałeś w tej kategorii!");
+    return;
+  }
+
+  const option = selectedOption[category];
+  if (!option) {
+    alert("Najpierw wybierz klip!");
+    return;
+  }
+
+  const votes = getVotes();
+  if (!votes[category]) votes[category] = {};
+  if (!votes[category][option]) votes[category][option] = 0;
+  votes[category][option]++;
+  saveVotes(votes);
+
+  if (!locks[userIP]) locks[userIP] = {};
+  locks[userIP][category] = true;
+  saveIPLocks(locks);
+
+  lockIfVoted();
+  alert("Głos zapisany! 🏆");
+
+  // automatycznie przejdź do następnej kategorii
+  nextCategory();
+}
+
+function lockIfVoted() {
+  const cat = categories[currentIndex];
+  const locks = getIPLocks();
+
+  if (locks[userIP] && locks[userIP][cat]) {
+    document.querySelectorAll(".card").forEach(c => {
+      c.classList.add("voted");
+    });
+  }
+}
+
+// ---------------- ADMIN ----------------
+function showLogin() {
+  const login = prompt("Login:");
+  const pass = prompt("Hasło:");
+
+  if (login === ADMIN_LOGIN && pass === ADMIN_PASSWORD) {
+    document.getElementById("adminPanel").style.display = "block";
+    showResults();
+  } else {
+    alert("Zły login lub hasło!");
+  }
+}
+
+function showResults() {
+  const votes = getVotes();
+  const results = document.getElementById("results");
+  results.innerHTML = "";
+
+  for (let cat in votes) {
+    const div = document.createElement("div");
+    div.className = "result";
+
+    let html = `<strong>${cat}</strong><br>`;
+    for (let opt in votes[cat]) {
+      html += `${opt}: ${votes[cat][opt]} głosów<br>`;
+    }
+
+    div.innerHTML = html;
+    results.appendChild(div);
+  }
+}
+
+function resetVotes() {
+  if (confirm("Na pewno zresetować wszystkie głosy i IP?")) {
+    localStorage.removeItem("votes");
+    localStorage.removeItem("ipLocks");
+    alert("Zresetowano wszystko!");
+    location.reload();
+  }
+}
+
+// ---------------- INIT ----------------
+fetchIP().then(renderCategory);
 </script>
 
 </body>
