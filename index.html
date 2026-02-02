@@ -59,6 +59,7 @@ header img {
   padding: 10px;
   border-radius: 10px;
   text-align: center;
+  cursor: pointer;
   border: 2px solid transparent;
 }
 
@@ -71,7 +72,7 @@ header img {
   pointer-events: none;
 }
 
-video {
+.thumb {
   width: 100%;
   height: 220px;
   object-fit: cover;
@@ -89,13 +90,25 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
-  background: #555;
-}
-
 #nav {
   text-align: center;
   margin: 10px;
+}
+
+/* POPUP VIDEO */
+#videoModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#videoModal video {
+  max-width: 90%;
+  max-height: 90%;
 }
 </style>
 </head>
@@ -114,6 +127,11 @@ button:disabled {
   <button onclick="nextCategory()">Następna ➡</button>
 </div>
 
+<!-- MODAL -->
+<div id="videoModal" onclick="closeVideo()">
+  <video controls autoplay></video>
+</div>
+
 <script>
 const categories = [
   "Rage Roku (klip)",
@@ -128,24 +146,72 @@ const categories = [
   "Porada Roku (klip)"
 ];
 
+const clips = {
+  "Rage Roku (klip)": [
+    { thumb: "thumbs/klip1.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" },
+    { thumb: "thumbs/klip2.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" },
+    { thumb: "thumbs/klip3.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" },
+    { thumb: "thumbs/klip4.jpg", video: "https://TWOJ-LINK-DO-WIDEO.mp4" }
+  ]
+};
+
 let currentIndex = 0;
-let selected = {};
 
 function renderCategory() {
   const slider = document.getElementById("slider");
   slider.innerHTML = "";
 
-  if (currentIndex >= categories.length) {
-    slider.innerHTML = "<h2>🎉 Dzięki za głosowanie!</h2>";
-    return;
-  }
-
   const cat = categories[currentIndex];
   const div = document.createElement("div");
   div.className = "category";
 
+  const items = clips[cat] || [];
+
   div.innerHTML = `
     <h2>${currentIndex + 1}/10 — ${cat}</h2>
     <div class="grid">
-      ${[1,2,3,4].map(i => `
-        <div class="card" onclick="select('${cat}', ${i}, this)">
+      ${items.map(item => `
+        <div class="card" onclick="openVideo('${item.video}')">
+          <img src="${item.thumb}" class="thumb">
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  slider.appendChild(div);
+}
+
+function openVideo(src) {
+  const modal = document.getElementById("videoModal");
+  const video = modal.querySelector("video");
+  video.src = src;
+  modal.style.display = "flex";
+}
+
+function closeVideo() {
+  const modal = document.getElementById("videoModal");
+  const video = modal.querySelector("video");
+  video.pause();
+  video.src = "";
+  modal.style.display = "none";
+}
+
+function nextCategory() {
+  if (currentIndex < categories.length - 1) {
+    currentIndex++;
+    renderCategory();
+  }
+}
+
+function prevCategory() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderCategory();
+  }
+}
+
+renderCategory();
+</script>
+
+</body>
+</html>
