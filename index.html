@@ -40,7 +40,7 @@ header img {
   background-size: cover;
   filter: blur(15px) brightness(0.3);
   z-index: 0;
-  pointer-events: none; /* nie przeszkadza w klikaniu */
+  pointer-events: none;
 }
 
 #slider {
@@ -249,7 +249,7 @@ function renderCategory() {
     <div class="grid">
       ${[1,2,3,4].map(i => `
         <div class="card" onclick="selectCard('${cat}', 'Opcja ${i}', this)">
-          <video src="klip${currentIndex + 1}_${i}.mp4" controls></video>
+          <video src="klipy/klip${currentIndex + 1}_${i}.mp4" controls></video>
           <button onclick="event.stopPropagation(); vote('${cat}', this.parentElement)">
             Głosuj
           </button>
@@ -382,4 +382,3 @@ fetchIP().then(renderCategory);
 
 </body>
 </html>
-
